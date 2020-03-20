@@ -8,5 +8,5 @@ project(NES)
 include_directories(./include)
 
 # target
-add_executable(NES ./src/main.cpp)
+add_executable(NES ./src/main.cpp ./src/bus.cpp ./src/cpu6502.cpp)
 
