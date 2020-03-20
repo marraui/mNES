@@ -1,0 +1,12 @@
+# cmake version to be used
+cmake_minimum_required(VERSION 3.0)
+
+# project name
+project(NES)
+
+# include
+include_directories(./include)
+
+# target
+add_executable(NES ./src/main.cpp)
+
