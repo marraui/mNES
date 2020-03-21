@@ -5,9 +5,14 @@
 #include <functional>
 Bus::Bus() {
   for (int i = 0; i < 64 * 1024; i++) this->ram[i] = 0x00;
-  Cpu6502* cpu = new Cpu6502([&](uint16_t addr, uint8_t data) -> void {
-    this->write(addr, data);
-  });
+  Cpu6502* cpu = new Cpu6502(
+    [&](uint16_t addr, uint8_t data) -> void {
+      this->write(addr, data);
+    },
+    [&](uint16_t addr) -> uint8_t {
+      return this->read(addr);
+    }
+  );
   this->cpu = cpu;
   std::cout << "Bus object initialized" << std::endl;
 }
