@@ -46,7 +46,7 @@ class Cpu6502 {
     void clock();
 
     // Read from the ram and store it into fetched
-    void fetch();
+    uint8_t fetch();
 
     enum STATUS_FLAGS {
       CARRY = (1 << 0),

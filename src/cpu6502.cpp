@@ -41,6 +41,16 @@ Cpu6502::Cpu6502(
 
 Cpu6502::~Cpu6502() { }
 
+uint8_t Cpu6502::fetch() {
+  if (
+    this->lookup[this->opcode].addrMode != &Cpu6502::ACC &&
+    this->lookup[this->opcode].addrMode != &Cpu6502::IMP
+  ) {
+    this->fetched = this->read(this->addrAbs);
+  }
+  return this->fetched;
+}
+
 void Cpu6502::clock() {
   if (this->cycles > 0) {
     this->cycles--;
@@ -186,4 +196,9 @@ uint8_t Cpu6502::IZY() {
   this->addrAbs = ((high << 8) | low) + this->yRegister;
 
   return (this->addrAbs & 0xFF00) != (high << 8);
+}
+
+// Add with carry
+uint8_t Cpu6502::ADC() {
+
 }
