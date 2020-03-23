@@ -61,17 +61,20 @@ void Cpu6502::clock() {
   this->cycles--;
 }
 
+// Accumulator Addressing
 uint8_t Cpu6502::ACC() {
   this->fetched = this->accumulator;
   return 0;
 }
 
+// Immediate Addressing
 uint8_t Cpu6502::IMM() {
   this->addrAbs = this->programCounter;
   this->programCounter += 1;
   return 0;
 }
 
+// Zero Page Addressing
 uint8_t Cpu6502::ZP0() {
   uint8_t low = this->read(this->programCounter);
   this->programCounter += 1;
@@ -79,6 +82,7 @@ uint8_t Cpu6502::ZP0() {
   return 0; 
 }
 
+// Indexed Zero Page Addressing X
 uint8_t Cpu6502::ZPX() {
   uint8_t low = this->read(this->programCounter) + this->xRegister;
   this->programCounter += 1;
@@ -86,6 +90,7 @@ uint8_t Cpu6502::ZPX() {
   return 0;
 }
 
+// Indexed Zero Page Addressing Y
 uint8_t Cpu6502::ZPY() {
   uint8_t low = this->read(this->programCounter) + this->yRegister;
   this->programCounter += 1;
@@ -93,6 +98,7 @@ uint8_t Cpu6502::ZPY() {
   return 0;
 }
 
+// Absolute Addressing
 uint8_t Cpu6502::ABS() {
   uint8_t low = this->read(this->programCounter);
   this->programCounter += 1;
@@ -102,6 +108,7 @@ uint8_t Cpu6502::ABS() {
   return 0; 
 }
 
+// Indexed Absolute Addressing X
 uint8_t Cpu6502::ABX() {
   uint8_t low = this->read(this->programCounter);
   this->programCounter += 1;
@@ -113,6 +120,7 @@ uint8_t Cpu6502::ABX() {
   return (this->addrAbs & 0xFF00) != (high << 8);
 }
 
+// Indexed Absolute Addresing Y
 uint8_t Cpu6502::ABY() {
   uint8_t low = this->read(this->programCounter);
   this->programCounter += 1;
@@ -154,6 +162,7 @@ uint8_t Cpu6502::IND() {
   return 0;
 }
 
+// Indexed Indirect Addressing (IND, X)
 uint8_t Cpu6502::IZX() {
   uint8_t addr = this->read(this->programCounter);
   this->programCounter += 1;
@@ -166,6 +175,7 @@ uint8_t Cpu6502::IZX() {
   return 0;
 }
 
+// Indirect Indexed Addressing (IND, Y)
 uint8_t Cpu6502::IZY() {
   uint8_t addr = this->read(this->programCounter);
   this->programCounter += 1;
