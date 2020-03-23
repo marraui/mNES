@@ -3,6 +3,8 @@
 
 #include <cstdint>
 #include <functional>
+#include <string>
+#include <vector>
 
 class Cpu6502 {
   private:
@@ -19,6 +21,43 @@ class Cpu6502 {
     uint32_t clockCount = 0; // Global accumulation of clock cycles
     uint8_t fetched = 0x00; // Data fetched from ram
     uint8_t opcode = 0x00; // Instruction byte
+    uint16_t addrAbs = 0x0000; // All used memory addressed end up here
+    uint16_t addrRel = 0x0000; // Relative address for branching operations
+
+    struct INSTRUCTION {
+      std::string name;
+      uint8_t (Cpu6502::*operate)(void) = nullptr;
+      uint8_t (Cpu6502::*addrMode)(void) = nullptr;
+      uint8_t cycles = 0;
+    };
+    std::vector<INSTRUCTION> lookup;
+
+  public:
+    // Initialize with read and write callbacks
+    Cpu6502(
+      std::function<void(uint16_t addr, uint8_t data)> write,
+      std::function<uint8_t(uint16_t addr)> read
+    );
+    ~Cpu6502(); 
+    std::function<void(uint16_t, uint8_t)> write;
+    std::function<uint8_t(uint16_t)> read;
+
+    // Execute one clock cycle
+    void clock();
+
+    // Read from the ram and store it into fetched
+    void fetch();
+
+    enum STATUS_FLAGS {
+      CARRY = (1 << 0),
+      ZERO = (1 << 1),
+      IRQ_DISABLE = (1 << 2),
+      DECIMAL_MODE = (1 << 3),
+      BRK_COMMAND = (1 << 4),
+      UNUSED = (1 << 5),
+      OVERFLOW = (1 << 6),
+      NEGATIVE = (1 << 7),
+    };
 
     // Addresing modes
     uint8_t ACC();  uint8_t ABY();
@@ -40,7 +79,7 @@ class Cpu6502 {
     uint8_t BIT();
     uint8_t BMI();
     uint8_t BNE();
-    uint8_t BPM();
+    uint8_t BPL();
     uint8_t BRK();
     uint8_t BVC();
     uint8_t BVS();
@@ -101,32 +140,8 @@ class Cpu6502 {
     uint8_t TXS();
     uint8_t TYA();
 
-  public:
-    // Initialize with read and write callbacks
-    Cpu6502(
-      std::function<void(uint16_t addr, uint8_t data)> write,
-      std::function<uint8_t(uint16_t addr)> read
-    );
-    ~Cpu6502(); 
-    std::function<void(uint16_t, uint8_t)> write;
-    std::function<uint8_t(uint16_t)> read;
+    uint8_t XXX(); // Illegal operator
 
-    // Execute one clock cycle
-    void clock();
-
-    // Read from the ram and store it into fetched
-    void fetch();
-
-    enum STATUS_FLAGS {
-      CARRY = (1 << 0),
-      ZERO = (1 << 1),
-      IRQ_DISABLE = (1 << 2),
-      DECIMAL_MODE = (1 << 3),
-      BRK_COMMAND = (1 << 4),
-      UNUSED = (1 << 5),
-      OVERFLOW = (1 << 6),
-      NEGATIVE = (1 << 7),
-    };
 };
 
 #endif /* CPU6502_h */
