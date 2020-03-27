@@ -93,7 +93,7 @@ void Cpu6502::reset() {
   this->accumulator = 0x00;
   this->xRegister = 0x00;
   this->yRegister = 0x00;
-  this->processorStatusRegister = 0x00 | this->UNUSED;
+  this->processorStatusRegister = 0x00 | this->UNUSED_SF;
 
   this->addrAbs = 0x0000;
   this->addrRel = 0x0000;
@@ -112,9 +112,9 @@ void Cpu6502::nmi() {
   this->write(0x100 + this->stackPointer, this->programCounter & 0x00FF);
   this->stackPointer -= 1;
 
-  this->setFlag(this->BRK_COMMAND, 0);
-  this->setFlag(this->UNUSED, 1);
-  this->setFlag(this->IRQ_DISABLE, 1);
+  this->setFlag(this->BRK_COMMAND_SF, 0);
+  this->setFlag(this->UNUSED_SF, 1);
+  this->setFlag(this->IRQ_DISABLE_SF, 1);
   this->write(0x100 + this->stackPointer, this->processorStatusRegister);
   this->stackPointer -= 1;
 
@@ -125,7 +125,7 @@ void Cpu6502::nmi() {
 
 // Interrupt request
 void Cpu6502::irq() {
-  if (this->getFlag(this->IRQ_DISABLE)) return;
+  if (this->getFlag(this->IRQ_DISABLE_SF)) return;
 
   this->write(0x100 + this->stackPointer, (this->programCounter >> 8) & 0x00FF);
   this->stackPointer -= 1;
@@ -133,9 +133,9 @@ void Cpu6502::irq() {
   this->write(0x100 + this->stackPointer, this->programCounter & 0x00FF);
   this->stackPointer -= 1;
 
-  this->setFlag(this->BRK_COMMAND, 0);
-  this->setFlag(this->UNUSED, 1);
-  this->setFlag(this->IRQ_DISABLE, 1);
+  this->setFlag(this->BRK_COMMAND_SF, 0);
+  this->setFlag(this->UNUSED_SF, 1);
+  this->setFlag(this->IRQ_DISABLE_SF, 1);
   this->write(0x100 + this->stackPointer, this->processorStatusRegister);
   this->stackPointer -= 1;
 
@@ -287,13 +287,13 @@ uint8_t Cpu6502::ADC() {
   uint16_t result =
     (uint16_t)this->accumulator +
     (uint16_t)this->fetched +
-    (uint16_t)this->getFlag(this->CARRY);
+    (uint16_t)this->getFlag(this->CARRY_SF);
   
-  this->setFlag(this->NEGATIVE, result & 0x80);
-  this->setFlag(this->ZERO, (0x00FF & result) == 0);
-  this->setFlag(this->CARRY, result > 0xFF);
+  this->setFlag(this->NEGATIVE_SF, result & 0x80);
+  this->setFlag(this->ZERO_SF, (0x00FF & result) == 0);
+  this->setFlag(this->CARRY_SF, result > 0xFF);
   this->setFlag(
-    this->OVERFLOW, 
+    this->OVERFLOW_SF, 
     (
       ~((uint16_t)this->accumulator ^ (uint16_t)this->fetched) &
       ((uint16_t)this->accumulator ^ (uint16_t)result) &
@@ -309,8 +309,8 @@ uint8_t Cpu6502::ADC() {
 uint8_t Cpu6502::AND() {
   this->fetch();
   this->accumulator &= this->fetched;
-  this->setFlag(this->NEGATIVE, this->accumulator & 0x80);
-  this->setFlag(this->ZERO, this->accumulator == 0);
+  this->setFlag(this->NEGATIVE_SF, this->accumulator & 0x80);
+  this->setFlag(this->ZERO_SF, this->accumulator == 0);
   return 1;
 }
 
@@ -318,9 +318,9 @@ uint8_t Cpu6502::AND() {
 uint8_t Cpu6502::ASL() {
   this->fetch();
   uint16_t result = (uint16_t)this->fetched << 1;
-  this->setFlag(this->NEGATIVE, result & 0x80);
-  this->setFlag(this->ZERO, (result & 0x00FF) == 0);
-  this->setFlag(this->CARRY, (result & 0xFF00) > 0);
+  this->setFlag(this->NEGATIVE_SF, result & 0x80);
+  this->setFlag(this->ZERO_SF, (result & 0x00FF) == 0);
+  this->setFlag(this->CARRY_SF, (result & 0xFF00) > 0);
 
   if (this->lookup[this->opcode].addrMode == &Cpu6502::ACC) {
     this->accumulator = result;
@@ -332,7 +332,7 @@ uint8_t Cpu6502::ASL() {
 
 // Branch on carry clear
 uint8_t Cpu6502::BCC() {
-  if (this->getFlag(this->CARRY)) return 0;
+  if (this->getFlag(this->CARRY_SF)) return 0;
 
   this->cycles += 1;
   uint16_t result = this->programCounter + this->addrRel;
@@ -346,7 +346,7 @@ uint8_t Cpu6502::BCC() {
 
 // Branch on carry set
 uint8_t Cpu6502::BCS() {
-  if (!this->getFlag(this->CARRY)) return 0;
+  if (!this->getFlag(this->CARRY_SF)) return 0;
   
   this->cycles += 1;
   uint16_t result = this->programCounter + this->addrRel;
@@ -360,7 +360,7 @@ uint8_t Cpu6502::BCS() {
 
 // Branch on result zero
 uint8_t Cpu6502::BEQ() {
-  if (!this->getFlag(this->ZERO)) return 0;
+  if (!this->getFlag(this->ZERO_SF)) return 0;
   
   this->cycles += 1;
   uint16_t result = this->programCounter + this->addrRel;
@@ -378,15 +378,15 @@ uint8_t Cpu6502::BEQ() {
 uint8_t Cpu6502::BIT() {
   this->fetch();
   uint8_t result = this->accumulator & this->fetched;
-  this->setFlag(this->NEGATIVE, (this->fetched & (1 << 7)) > 0);
-  this->setFlag(this->OVERFLOW, (this->fetched & (1 << 6)) > 0);
-  this->setFlag(this->ZERO, result == 0);
+  this->setFlag(this->NEGATIVE_SF, (this->fetched & (1 << 7)) > 0);
+  this->setFlag(this->OVERFLOW_SF, (this->fetched & (1 << 6)) > 0);
+  this->setFlag(this->ZERO_SF, result == 0);
   return 0;
 }
 
 // Branch on result minus
 uint8_t Cpu6502::BMI() {
-  if (!this->getFlag(this->NEGATIVE)) return 0;
+  if (!this->getFlag(this->NEGATIVE_SF)) return 0;
   
   this->cycles += 1;
   uint16_t result = this->programCounter + this->addrRel;
@@ -400,7 +400,7 @@ uint8_t Cpu6502::BMI() {
 
 // Branch on result not zero
 uint8_t Cpu6502::BNE() {
-  if (this->getFlag(this->ZERO)) return 0;
+  if (this->getFlag(this->ZERO_SF)) return 0;
   
   this->cycles += 1;
   uint16_t result = this->programCounter + this->addrRel;
@@ -414,7 +414,7 @@ uint8_t Cpu6502::BNE() {
 
 // Branch on result plus
 uint8_t Cpu6502::BPL() {
-  if (this->getFlag(this->NEGATIVE)) return 0;
+  if (this->getFlag(this->NEGATIVE_SF)) return 0;
   
   this->cycles += 1;
   uint16_t result = this->programCounter + this->addrRel;
@@ -436,11 +436,11 @@ uint8_t Cpu6502::BRK() {
   this->write(0x100 + this->stackPointer, (this->programCounter & 0x00FF));
   this->stackPointer -= 1;
 
-  this->setFlag(this->IRQ_DISABLE, 1);
-  this->setFlag(this->BRK_COMMAND, 1);
+  this->setFlag(this->IRQ_DISABLE_SF, 1);
+  this->setFlag(this->BRK_COMMAND_SF, 1);
   this->write(0x100 + this->stackPointer, this->processorStatusRegister);
   this->stackPointer -= 1;
-  this->setFlag(this->BRK_COMMAND, 0);
+  this->setFlag(this->BRK_COMMAND_SF, 0);
 
   this->programCounter = ((uint16_t)this->read(0xFFFF) << 8) | (uint16_t)this->read(0xFFFE);
   return 0;
@@ -448,7 +448,7 @@ uint8_t Cpu6502::BRK() {
 
 // Branch if overflow clear
 uint8_t Cpu6502::BVC() {
-  if (this->getFlag(this->OVERFLOW)) return 0;
+  if (this->getFlag(this->OVERFLOW_SF)) return 0;
   
   this->cycles += 1;
   uint16_t result = this->programCounter + this->addrRel;
@@ -462,7 +462,7 @@ uint8_t Cpu6502::BVC() {
 
 // Branch if overflow set
 uint8_t Cpu6502::BVS() {
-  if (!this->getFlag(this->NEGATIVE)) return 0;
+  if (!this->getFlag(this->NEGATIVE_SF)) return 0;
   
   this->cycles += 1;
   uint16_t result = this->programCounter + this->addrRel;
@@ -476,25 +476,25 @@ uint8_t Cpu6502::BVS() {
 
 // Clear carry
 uint8_t Cpu6502::CLC() {
-  this->setFlag(this->CARRY, 0);
+  this->setFlag(this->CARRY_SF, 0);
   return 0;
 }
 
 // Clear decimal
 uint8_t Cpu6502::CLD() {
-  this->setFlag(this->DECIMAL_MODE, 0);
+  this->setFlag(this->DECIMAL_MODE_SF, 0);
   return 0;
 }
 
 // Clear IRQ_DISABlE
 uint8_t Cpu6502::CLI() {
-  this->setFlag(this->IRQ_DISABLE, 0);
+  this->setFlag(this->IRQ_DISABLE_SF, 0);
   return 0;
 }
 
 // Clear overflow
 uint8_t Cpu6502::CLV() {
-  this->setFlag(this->OVERFLOW, 0);
+  this->setFlag(this->OVERFLOW_SF, 0);
   return 0;
 }
 
@@ -502,9 +502,9 @@ uint8_t Cpu6502::CLV() {
 uint8_t Cpu6502::CMP() {
   this->fetch();
   uint8_t result = this->accumulator - this->fetched;
-  this->setFlag(this->NEGATIVE, result & 0x80);
-  this->setFlag(this->ZERO, result == 0);
-  this->setFlag(this->CARRY, this->accumulator >= this->fetched);
+  this->setFlag(this->NEGATIVE_SF, result & 0x80);
+  this->setFlag(this->ZERO_SF, result == 0);
+  this->setFlag(this->CARRY_SF, this->accumulator >= this->fetched);
   return 0;
 }
 
@@ -512,9 +512,9 @@ uint8_t Cpu6502::CMP() {
 uint8_t Cpu6502::CPX() {
   this->fetch();
   uint8_t result = this->xRegister - this->fetched;
-  this->setFlag(this->NEGATIVE, result & 0x80);
-  this->setFlag(this->ZERO, result == 0);
-  this->setFlag(this->CARRY, this->xRegister >= this->fetched);
+  this->setFlag(this->NEGATIVE_SF, result & 0x80);
+  this->setFlag(this->ZERO_SF, result == 0);
+  this->setFlag(this->CARRY_SF, this->xRegister >= this->fetched);
   return 0;
 }
 
@@ -522,9 +522,9 @@ uint8_t Cpu6502::CPX() {
 uint8_t Cpu6502::CPY() {
   this->fetch();
   uint8_t result = this->yRegister - this->fetched;
-  this->setFlag(this->NEGATIVE, result & 0x80);
-  this->setFlag(this->ZERO, result == 0);
-  this->setFlag(this->CARRY, this->yRegister >= this->fetched);
+  this->setFlag(this->NEGATIVE_SF, result & 0x80);
+  this->setFlag(this->ZERO_SF, result == 0);
+  this->setFlag(this->CARRY_SF, this->yRegister >= this->fetched);
   return 0;
 }
 
@@ -533,24 +533,24 @@ uint8_t Cpu6502::DEC() {
   this->fetch();
   uint8_t result = this->fetched - 1;
   this->write(this->addrAbs, result);
-  this->setFlag(this->ZERO, result == 0);
-  this->setFlag(this->NEGATIVE, result & 0x80);
+  this->setFlag(this->ZERO_SF, result == 0);
+  this->setFlag(this->NEGATIVE_SF, result & 0x80);
   return 0;
 }
 
 // Decrement x
 uint8_t Cpu6502::DEX() {
   this->xRegister -= 1;
-  this->setFlag(this->ZERO, this->xRegister == 0);
-  this->setFlag(this->NEGATIVE, this->xRegister & 0x80);
+  this->setFlag(this->ZERO_SF, this->xRegister == 0);
+  this->setFlag(this->NEGATIVE_SF, this->xRegister & 0x80);
   return 0;
 }
 
 // Decrement y
 uint8_t Cpu6502::DEY() {
   this->yRegister -= 1;
-  this->setFlag(this->ZERO, this->yRegister == 0);
-  this->setFlag(this->NEGATIVE, this->yRegister & 0x80);
+  this->setFlag(this->ZERO_SF, this->yRegister == 0);
+  this->setFlag(this->NEGATIVE_SF, this->yRegister & 0x80);
   return 0;
 }
 
@@ -558,8 +558,8 @@ uint8_t Cpu6502::DEY() {
 uint8_t Cpu6502::EOR() {
   this->fetch();
   this->accumulator ^= this->fetched;
-  this->setFlag(this->ZERO, this->accumulator == 0);
-  this->setFlag(this->NEGATIVE, this->accumulator & 0x80);
+  this->setFlag(this->ZERO_SF, this->accumulator == 0);
+  this->setFlag(this->NEGATIVE_SF, this->accumulator & 0x80);
   return 0;
 }
 
@@ -568,24 +568,24 @@ uint8_t Cpu6502::INC() {
   this->fetch();
   uint8_t result = this->fetched + 1;
   this->write(this->addrAbs, result);
-  this->setFlag(this->ZERO, result == 0);
-  this->setFlag(this->NEGATIVE, result & 0x80);
+  this->setFlag(this->ZERO_SF, result == 0);
+  this->setFlag(this->NEGATIVE_SF, result & 0x80);
   return 0;
 }
 
 // Increment x
 uint8_t Cpu6502::INX() {
   this->xRegister += 1;
-  this->setFlag(this->ZERO, this->xRegister == 0);
-  this->setFlag(this->NEGATIVE, this->xRegister & 0x80);
+  this->setFlag(this->ZERO_SF, this->xRegister == 0);
+  this->setFlag(this->NEGATIVE_SF, this->xRegister & 0x80);
   return 0;
 }
 
 // Increment y
 uint8_t Cpu6502::INY() {
   this->yRegister += 1;
-  this->setFlag(this->ZERO, this->yRegister == 0);
-  this->setFlag(this->NEGATIVE, this->yRegister & 0x80);
+  this->setFlag(this->ZERO_SF, this->yRegister == 0);
+  this->setFlag(this->NEGATIVE_SF, this->yRegister & 0x80);
   return 0;
 }
 
@@ -612,8 +612,8 @@ uint8_t Cpu6502::JSR() {
 uint8_t Cpu6502::LDA() {
   this->fetch();
   this->accumulator = this->fetched;
-  this->setFlag(this->ZERO, this->accumulator == 0);
-  this->setFlag(this->NEGATIVE, this->accumulator & 0x80);
+  this->setFlag(this->ZERO_SF, this->accumulator == 0);
+  this->setFlag(this->NEGATIVE_SF, this->accumulator & 0x80);
   return 1;
 }
 
@@ -621,8 +621,8 @@ uint8_t Cpu6502::LDA() {
 uint8_t Cpu6502::LDX() {
   this->fetch();
   this->xRegister = this->fetched;
-  this->setFlag(this->ZERO, this->xRegister == 0);
-  this->setFlag(this->NEGATIVE, this->accumulator & 0x80);
+  this->setFlag(this->ZERO_SF, this->xRegister == 0);
+  this->setFlag(this->NEGATIVE_SF, this->accumulator & 0x80);
   return 1;
 }
 
@@ -630,8 +630,8 @@ uint8_t Cpu6502::LDX() {
 uint8_t Cpu6502::LDY() {
   this->fetch();
   this->yRegister = this->fetched;
-  this->setFlag(this->ZERO, this->yRegister == 0);
-  this->setFlag(this->NEGATIVE, this->accumulator & 0x80);
+  this->setFlag(this->ZERO_SF, this->yRegister == 0);
+  this->setFlag(this->NEGATIVE_SF, this->accumulator & 0x80);
   return 1;
 }
 
@@ -639,9 +639,9 @@ uint8_t Cpu6502::LDY() {
 uint8_t Cpu6502::LSR() {
   this->fetch();
   uint8_t result = this->fetched >> 1;
-  this->setFlag(this->ZERO, result == 0);
-  this->setFlag(this->CARRY, this->fetched & 0x01);
-  this->setFlag(this->NEGATIVE, result & 0x80);
+  this->setFlag(this->ZERO_SF, result == 0);
+  this->setFlag(this->CARRY_SF, this->fetched & 0x01);
+  this->setFlag(this->NEGATIVE_SF, result & 0x80);
   if (this->lookup[this->opcode].addrMode == &Cpu6502::ACC) {
     this->accumulator = result;
   } else {
@@ -673,8 +673,8 @@ uint8_t Cpu6502::NOP() {
 uint8_t Cpu6502::ORA() {
   this->fetch();
   this->accumulator |= this->fetched;
-  this->setFlag(this->ZERO, this->accumulator == 0);
-  this->setFlag(this->NEGATIVE, this->accumulator & 0x80);
+  this->setFlag(this->ZERO_SF, this->accumulator == 0);
+  this->setFlag(this->NEGATIVE_SF, this->accumulator & 0x80);
   return 1;
 }
 
@@ -689,7 +689,7 @@ uint8_t Cpu6502::PHA() {
 
 // Push processor status onto stack
 uint8_t Cpu6502::PHP() {
-  this->write(0x0100 + this->stackPointer, this->processorStatusRegister | this->UNUSED | this->BRK_COMMAND);
+  this->write(0x0100 + this->stackPointer, this->processorStatusRegister | this->UNUSED_SF | this->BRK_COMMAND_SF);
   this->stackPointer -= 1;
   return 0;
 }
@@ -712,10 +712,10 @@ uint8_t Cpu6502::PLP() {
 uint8_t Cpu6502::ROL() {
   this->fetch();
   bool newCarry = this->fetched & 0x80;
-  uint8_t result = (this->fetched << 1) | this->getFlag(this->CARRY);
-  this->setFlag(this->CARRY, newCarry);
-  this->setFlag(this->ZERO, result == 0);
-  this->setFlag(this->NEGATIVE, result & 0x80);
+  uint8_t result = (this->fetched << 1) | this->getFlag(this->CARRY_SF);
+  this->setFlag(this->CARRY_SF, newCarry);
+  this->setFlag(this->ZERO_SF, result == 0);
+  this->setFlag(this->NEGATIVE_SF, result & 0x80);
   if (this->lookup[this->opcode].addrMode == &Cpu6502::ACC) {
     this->accumulator = result;
   } else {
@@ -728,10 +728,10 @@ uint8_t Cpu6502::ROL() {
 uint8_t Cpu6502::ROR() {
   this->fetch();
   bool newCarry = this->fetched & 0x01;
-  uint8_t result = (this->fetched >> 1) | (this->getFlag(this->CARRY) << 8);
-  this->setFlag(this->CARRY, newCarry);
-  this->setFlag(this->ZERO, result == 0);
-  this->setFlag(this->NEGATIVE, result & 0x80);
+  uint8_t result = (this->fetched >> 1) | (this->getFlag(this->CARRY_SF) << 8);
+  this->setFlag(this->CARRY_SF, newCarry);
+  this->setFlag(this->ZERO_SF, result == 0);
+  this->setFlag(this->NEGATIVE_SF, result & 0x80);
   if (this->lookup[this->opcode].addrMode == &Cpu6502::ACC) {
     this->accumulator = result;
   } else {
@@ -777,13 +777,13 @@ uint8_t Cpu6502::SBC() {
   uint16_t result =
     (uint16_t)this->accumulator +
     value +
-    (uint16_t)this->getFlag(this->CARRY);
+    (uint16_t)this->getFlag(this->CARRY_SF);
   
-  this->setFlag(this->NEGATIVE, result & 0x80);
-  this->setFlag(this->ZERO, (0x00FF & result) == 0);
-  this->setFlag(this->CARRY, result > 0xFF);
+  this->setFlag(this->NEGATIVE_SF, result & 0x80);
+  this->setFlag(this->ZERO_SF, (0x00FF & result) == 0);
+  this->setFlag(this->CARRY_SF, result > 0xFF);
   this->setFlag(
-    this->OVERFLOW, 
+    this->OVERFLOW_SF, 
     (
       ~((uint16_t)this->accumulator ^ (uint16_t)this->fetched) &
       ((uint16_t)this->accumulator ^ (uint16_t)result) &
@@ -797,19 +797,19 @@ uint8_t Cpu6502::SBC() {
 
 // Set carri flag
 uint8_t Cpu6502::SEC() {
-  this->setFlag(this->CARRY, true);
+  this->setFlag(this->CARRY_SF, true);
   return 0;
 }
 
 // Set Decimal flag 
 uint8_t Cpu6502::SED() {
-  this->setFlag(this->DECIMAL_MODE, true);
+  this->setFlag(this->DECIMAL_MODE_SF, true);
   return 0;
 }
 
 // Set interrupt disable
 uint8_t Cpu6502::SEI() {
-  this->setFlag(this->IRQ_DISABLE, true);
+  this->setFlag(this->IRQ_DISABLE_SF, true);
   return 0;
 }
 
@@ -834,32 +834,32 @@ uint8_t Cpu6502::STY() {
 // Transfer accumulator to x
 uint8_t Cpu6502::TAX() {
   this->xRegister = this->accumulator;
-  this->setFlag(this->ZERO, this->xRegister == 0);
-  this->setFlag(this->NEGATIVE, this->xRegister & 0x80);
+  this->setFlag(this->ZERO_SF, this->xRegister == 0);
+  this->setFlag(this->NEGATIVE_SF, this->xRegister & 0x80);
   return 0;
 }
 
 // Transfer accumulator to y
 uint8_t Cpu6502::TAY() {
   this->yRegister = this->accumulator;
-  this->setFlag(this->ZERO, this->yRegister == 0);
-  this->setFlag(this->NEGATIVE, this->yRegister & 0x80);
+  this->setFlag(this->ZERO_SF, this->yRegister == 0);
+  this->setFlag(this->NEGATIVE_SF, this->yRegister & 0x80);
   return 0;
 }
 
 // Transfer stack pointer to x
 uint8_t Cpu6502::TSX() {
   this->xRegister = this->stackPointer;
-  this->setFlag(this->ZERO, this->xRegister == 0);
-  this->setFlag(this->NEGATIVE, this->yRegister & 0x80);
+  this->setFlag(this->ZERO_SF, this->xRegister == 0);
+  this->setFlag(this->NEGATIVE_SF, this->yRegister & 0x80);
   return 0;
 }
 
 // Transfer x to accumulator
 uint8_t Cpu6502::TXA() {
   this->accumulator = this->xRegister;
-  this->setFlag(this->ZERO, this->accumulator == 0);
-  this->setFlag(this->NEGATIVE, this->accumulator & 0x80);
+  this->setFlag(this->ZERO_SF, this->accumulator == 0);
+  this->setFlag(this->NEGATIVE_SF, this->accumulator & 0x80);
   return 0;
 }
 
@@ -872,8 +872,8 @@ uint8_t Cpu6502::TXS() {
 // Transfer y to accumulator 
 uint8_t Cpu6502::TYA() {
   this->accumulator = this->yRegister;
-  this->setFlag(this->ZERO, this->accumulator == 0);
-  this->setFlag(this->NEGATIVE, this->accumulator & 0x80);
+  this->setFlag(this->ZERO_SF, this->accumulator == 0);
+  this->setFlag(this->NEGATIVE_SF, this->accumulator & 0x80);
   return 0;
 }
 

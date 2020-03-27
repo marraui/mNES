@@ -7,8 +7,12 @@ set (CMAKE_CXX_STANDARD 11)
 project(NES)
 
 # include
-include_directories(./include)
+include_directories(./include ./lib/SLD2/include)
 
 # target
 add_executable(NES ./src/main.cpp ./src/bus.cpp ./src/cpu6502.cpp)
+
+# external libraries
+add_subdirectory(./lib/SDL2)
+target_link_libraries(NES SDL2)
 

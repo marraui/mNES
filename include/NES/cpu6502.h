@@ -49,14 +49,14 @@ class Cpu6502 {
     uint8_t fetch();
 
     enum STATUS_FLAGS {
-      CARRY = (1 << 0),
-      ZERO = (1 << 1),
-      IRQ_DISABLE = (1 << 2),
-      DECIMAL_MODE = (1 << 3),
-      BRK_COMMAND = (1 << 4),
-      UNUSED = (1 << 5),
-      OVERFLOW = (1 << 6),
-      NEGATIVE = (1 << 7),
+      CARRY_SF = (1 << 0),
+      ZERO_SF = (1 << 1),
+      IRQ_DISABLE_SF = (1 << 2),
+      DECIMAL_MODE_SF = (1 << 3),
+      BRK_COMMAND_SF = (1 << 4),
+      UNUSED_SF = (1 << 5),
+      OVERFLOW_SF = (1 << 6),
+      NEGATIVE_SF = (1 << 7),
     };
 
     void setFlag(STATUS_FLAGS flag, bool val);
