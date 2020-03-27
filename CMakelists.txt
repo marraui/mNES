@@ -10,7 +10,7 @@ project(NES)
 include_directories(./include ./lib/SLD2/include)
 
 # target
-add_executable(NES ./src/main.cpp ./src/bus.cpp ./src/cpu6502.cpp)
+add_executable(NES ./src/main.cpp ./src/bus.cpp ./src/cpu6502.cpp ./src/window_manager.cpp)
 
 # external libraries
 add_subdirectory(./lib/SDL2)
