@@ -9,12 +9,12 @@
 class Cpu6502 {
   private:
     // CPU core registers
-    u_int16_t programCounter = 0x0000;
-    u_int8_t accumulator = 0x00;
-    u_int8_t xRegister = 0x00;
-    u_int8_t yRegister = 0x00;
-    u_int8_t stackPointer = 0x00;
-    u_int8_t processorStatusRegister = 0x00;
+    uint16_t programCounter = 0x0000;
+    uint8_t accumulator = 0x00;
+    uint8_t xRegister = 0x00;
+    uint8_t yRegister = 0x00;
+    uint8_t stackPointer = 0x00;
+    uint8_t processorStatusRegister = 0x00;
 
     // Aux variables
     uint8_t cycles = 0; // Cycles remaining from instruction
@@ -26,9 +26,9 @@ class Cpu6502 {
 
     struct INSTRUCTION {
       std::string name;
-      uint8_t (Cpu6502::*operate)(void) = nullptr;
-      uint8_t (Cpu6502::*addrMode)(void) = nullptr;
-      uint8_t cycles = 0;
+      uint8_t (Cpu6502::*operate)(void);
+      uint8_t (Cpu6502::*addrMode)(void);
+      uint8_t cycles;
     };
     std::vector<INSTRUCTION> lookup;
 
@@ -58,6 +58,16 @@ class Cpu6502 {
       OVERFLOW = (1 << 6),
       NEGATIVE = (1 << 7),
     };
+
+    void setFlag(STATUS_FLAGS flag, bool val);
+
+    uint8_t getFlag(STATUS_FLAGS);
+
+    // Interrupts
+    void nmi();
+    void irq();
+    void rti();
+    void reset();
 
     // Addresing modes
     uint8_t ACC();  uint8_t ABY();
