@@ -23,6 +23,7 @@ add_executable(NES
   ./src/texture.cpp
   ./src/text_texture.cpp
   ./src/image_texture.cpp
+  ./src/utils.cpp
 )
 target_link_libraries(NES PRIVATE
   SDL2::SDL2

@@ -4,6 +4,7 @@
 #include "NES/window_manager.h"
 #include "NES/texture.h"
 #include "NES/text_texture.h"
+#include "NES/utils.h"
 
 int main() {
   Bus bus = Bus();
@@ -11,7 +12,7 @@ int main() {
   window.init();
   TextTexture textTexture = TextTexture();
 
-  textTexture.loadFont("assets/lazy.ttf", 22);
+  textTexture.loadFont("assets/PressStart2P.ttf", 22);
   textTexture.loadFromRenderedText("Goodmorning Gamers", window.getRenderer(), { 0xFF, 0xFF, 0xFF });
   bool quit = false;
   SDL_Event event;
