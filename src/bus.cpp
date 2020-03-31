@@ -29,3 +29,11 @@ uint8_t Bus::read(uint16_t addr) {
   if (addr < 0x000 || addr > 0xFFFF) return 0x00;
   return this->ram[addr];
 }
+
+uint8_t* Bus::getRam() {
+  return this->ram;
+}
+
+Cpu6502* Bus::getCpu() {
+  return this->cpu;
+}

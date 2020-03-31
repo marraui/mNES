@@ -4,7 +4,7 @@
 #include "texture.h"
 
 class WindowManager {
-  private:
+  protected:
     SDL_Renderer* renderer;
     SDL_Window* window;
   public:

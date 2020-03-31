@@ -12,5 +12,5 @@ std::string hexToString(int value, int size) {
     c = ::toupper(c);
   });
   int zeros = std::max(size - (int)hex.length(), 0);
-  return "0x" + (std::string(zeros, '0') + hex);
+  return std::string(zeros, '0') + hex;
 }

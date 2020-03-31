@@ -152,6 +152,12 @@ class Cpu6502 {
 
     uint8_t XXX(); // Illegal operator
 
+    uint8_t getStatus();
+    uint8_t getX();
+    uint8_t getY();
+    uint16_t getSP();
+    uint16_t getPC();
+    uint8_t getAcc();
 };
 
 #endif /* CPU6502_h */

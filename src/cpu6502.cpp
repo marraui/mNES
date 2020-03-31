@@ -43,6 +43,30 @@ Cpu6502::Cpu6502(
 
 Cpu6502::~Cpu6502() { }
 
+uint8_t Cpu6502::getStatus() {
+  return this->processorStatusRegister;
+}
+
+uint8_t Cpu6502::getX() {
+  return this->xRegister;
+}
+
+uint8_t Cpu6502::getY() {
+  return this->yRegister;
+}
+
+uint16_t Cpu6502::getSP() {
+  return this->stackPointer;
+}
+
+uint16_t Cpu6502::getPC() {
+  return this->programCounter;
+}
+
+uint8_t Cpu6502::getAcc() {
+  return this->accumulator;
+}
+
 uint8_t Cpu6502::fetch() {
   if (
     this->lookup[this->opcode].addrMode != &Cpu6502::ACC &&

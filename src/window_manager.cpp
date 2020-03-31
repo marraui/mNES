@@ -12,15 +12,6 @@ WindowManager::WindowManager() {
 WindowManager::~WindowManager() {}
 
 void WindowManager::init() {
-  // Initialize SDL with video
-  if (SDL_Init(SDL_INIT_VIDEO) < 0) {
-    std::cout << "SDL couldn't initialize, SDL error:" << std::endl << SDL_GetError() << std::endl;
-    return;
-  }
-  if (!SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1")) {
-    std::cout << "Warning! Linear texture filtering not enabled" << std::endl;
-  }
-
   // Create window
   this->window = SDL_CreateWindow("NES", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 640, 480, SDL_WINDOW_SHOWN);
   if (this->window == nullptr) {
@@ -35,15 +26,6 @@ void WindowManager::init() {
   }
 
   SDL_SetRenderDrawColor(this->renderer, 0xFF, 0xFF, 0xFF, 0xFF);
-  if (!(IMG_Init(IMG_INIT_PNG) & IMG_INIT_PNG)) {
-    std::cout <<"SDL_image couldn't initialize, error: " << SDL_GetError() << std::endl;
-    return;
-  }
-
-  if (TTF_Init() == -1) {
-    std::cout << "SDL_ttf couldn't initialize, error: " << SDL_GetError() << std::endl;
-    return;
-  }
 }
 
 void WindowManager::destroy() {

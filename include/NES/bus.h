@@ -12,6 +12,8 @@ class Bus {
     ~Bus();
     void write(uint16_t addr, uint8_t data);
     uint8_t read(uint16_t addr);
+    uint8_t* getRam();
+    Cpu6502* getCpu();
 };
 
 #endif /* BUS_H */
