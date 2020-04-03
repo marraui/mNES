@@ -3,3 +3,4 @@ install
 NES.code-workspace
 .vscode
 .DS_Store
+.env

@@ -1,0 +1,69 @@
+#!/bin/bash
+clean () {
+  echo "Deleting build dir..."
+  rm -r ./build
+  echo "Clean successful!"
+}
+
+run () {
+  echo "Starting project"
+  ./build/NES
+}
+
+build () {
+  echo "Building..."
+  mkdir build
+  cd build
+  cmake .. -DCMAKE_TOOLCHAIN_FILE="$VCPKG_PATH/scripts/buildsystems/vcpkg.cmake"
+  make
+  echo "Finished building!"
+}
+
+build_cmake() {
+  echo "Building..."
+  mkdir build
+  cd build
+  cmake .. -DCMAKE_TOOLCHAIN_FILE="$VCPKG_PATH/scripts/buildsystems/vcpkg.cmake"
+  echo "Finished building!"
+}
+
+install() {
+  echo "Installing..."
+  VCPKG_PATH=$1
+  eval "$VCPKG_PATH/vcpkg install sdl2 sdl2-image sdl2-ttf"
+  echo "Finished installation"
+}
+
+VCPKG_PATH=$(grep VCPKG_PATH .env | xargs)
+IFS="=" read -ra VCPKG_PATH <<< "$VCPKG_PATH"
+VCPKG_PATH=${VCPKG_PATH[1]}
+
+SCRIPT=$1
+
+case $SCRIPT in
+
+  "build")
+    build $VCPKG_PATH
+    ;;
+
+  "build:cmake")
+    build_cmake $VCPKG_PATH
+    ;;
+
+  "clean")
+    clean
+    ;;
+
+  "install")
+    install $VCPKG_PATH
+    ;;
+
+  "run")
+    run
+    ;;
+  
+  "start")
+    ./config build
+    ./config run
+    ;;
+  esac
