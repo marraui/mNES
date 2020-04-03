@@ -5,6 +5,7 @@
 #include <functional>
 #include <string>
 #include <vector>
+#include <map>
 
 class Cpu6502 {
   private:
@@ -27,8 +28,10 @@ class Cpu6502 {
     struct INSTRUCTION {
       std::string name;
       uint8_t (Cpu6502::*operate)(void);
+      std::string modeName;
       uint8_t (Cpu6502::*addrMode)(void);
       uint8_t cycles;
+      uint8_t bytes;
     };
     std::vector<INSTRUCTION> lookup;
 
@@ -36,11 +39,12 @@ class Cpu6502 {
     // Initialize with read and write callbacks
     Cpu6502(
       std::function<void(uint16_t addr, uint8_t data)> write,
-      std::function<uint8_t(uint16_t addr)> read
+      std::function<uint8_t(uint16_t addr, bool isReadOnly)> read
     );
     ~Cpu6502(); 
     std::function<void(uint16_t, uint8_t)> write;
     std::function<uint8_t(uint16_t)> read;
+    std::function<uint8_t(uint16_t)> readOnly;
 
     // Execute one clock cycle
     void clock();
@@ -158,6 +162,7 @@ class Cpu6502 {
     uint16_t getSP();
     uint16_t getPC();
     uint8_t getAcc();
+    std::map<uint16_t, std::string> disassemble(uint16_t start, uint16_t end);
 };
 
 #endif /* CPU6502_h */
