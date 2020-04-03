@@ -1,6 +1,6 @@
 #ifndef WINDOW_MANAGER_H
 #define WINDOW_MANAGER_H
-#include <SDL.h>
+#include <SDL2/SDL.h>
 #include "texture.h"
 
 class WindowManager {
