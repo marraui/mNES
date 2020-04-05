@@ -70,6 +70,10 @@ uint8_t Cpu6502::getAcc() {
   return this->accumulator;
 }
 
+bool Cpu6502::isComplete() {
+  return this->cycles == 0;
+}
+
 std::map<uint16_t, std::string> Cpu6502::disassemble(uint16_t start, uint16_t end) {
   std::map<uint16_t, std::string> mapLines;
   uint32_t addr = start;

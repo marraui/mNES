@@ -162,6 +162,7 @@ class Cpu6502 {
     uint16_t getSP();
     uint16_t getPC();
     uint8_t getAcc();
+    bool isComplete();
     std::map<uint16_t, std::string> disassemble(uint16_t start, uint16_t end);
 };
 

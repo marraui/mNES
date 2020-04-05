@@ -6,6 +6,8 @@
 #include <string>
 #include <iostream>
 #include <algorithm>
+#include <map>
+#include <iostream>
 
 ProcessorWindow::ProcessorWindow() {
   WindowManager();
@@ -114,4 +116,46 @@ void ProcessorWindow::renderProcessor(Cpu6502* cpu) {
   str = "Y: $" + hexToString(cpu->getY(), 2) + " [" + std::to_string(cpu->getY()) + "]";
   this->textTexture.loadFromRenderedText(str, this->renderer, { 0xFF, 0xFF, 0xFF });
   this->render(&this->textTexture, 0, 20 * 10);
+}
+
+void ProcessorWindow::renderCode(std::map<uint16_t, std::string> mapLines, uint16_t currentLine, int linesToRender) {
+  int lineCount = linesToRender;
+  int yOffset = 21 * 10 + ((linesToRender >> 1) * 10);
+  std::map<uint16_t, std::string>::iterator mapIterator = mapLines.find(currentLine);
+  if (mapIterator != mapLines.end()) {
+    this->textTexture.loadFromRenderedText((*mapIterator).second, this->renderer, { 0x00, 0xFF, 0xFF });
+    this->render(&this->textTexture, 0, yOffset);
+    yOffset += 10;
+    lineCount -= 1;
+    mapIterator++;
+    while (mapIterator != mapLines.end() && lineCount > (linesToRender >> 1)) {
+      this->textTexture.loadFromRenderedText((*mapIterator).second, this->renderer, { 0xFF, 0xFF, 0xFF });
+      this->render(&this->textTexture, 0, yOffset);
+      yOffset += 10;
+      mapIterator++;
+      lineCount -= 1;
+    }
+  }
+  this->textTexture.loadFromRenderedText(
+    "<-: PREV PAGE  ->: NEXT PAGE  SPACE: NEXT INSTRUCTION  I: IRQ  N: NMI  R: RESET",
+    this->renderer,
+    { 0xFF, 0xFF, 0xFF }
+  );
+  this->render(&this->textTexture, 0, yOffset);
+
+  mapIterator = mapLines.find(currentLine);
+  yOffset = 21 * 10 + ((linesToRender >> 1) * 10);
+  if (mapIterator != mapLines.end()) {
+    mapIterator--;
+
+    while (mapIterator != mapLines.end() && lineCount > 0) {
+      yOffset -= 10;
+      this->textTexture.loadFromRenderedText((*mapIterator).second, this->renderer, { 0xFF, 0xFF, 0xFF });
+      this->render(&this->textTexture, 0, yOffset);
+      mapIterator--;
+      lineCount -= 1;
+    }
+  }
+
+
 }

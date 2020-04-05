@@ -9,8 +9,8 @@ Bus::Bus() {
     [&](uint16_t addr, uint8_t data) -> void {
       this->write(addr, data);
     },
-    [&](uint16_t addr) -> uint8_t {
-      return this->read(addr);
+    [&](uint16_t addr, bool readOnly) -> uint8_t {
+      return this->read(addr, readOnly);
     }
   );
   this->cpu = cpu;
@@ -19,13 +19,12 @@ Bus::Bus() {
 
 Bus::~Bus() { }
 
-void Bus::write(uint16_t addr, uint8_t data) {
-  std::cout << "inside bus write" << std::endl;
+void Bus::write(uint16_t addr, uint8_t data, bool writeOnly) {
   if (addr < 0x0000 || addr > 0xFFFF) return;
   this->ram[addr] = data;
 }
 
-uint8_t Bus::read(uint16_t addr) {
+uint8_t Bus::read(uint16_t addr, bool writeOnly) {
   if (addr < 0x000 || addr > 0xFFFF) return 0x00;
   return this->ram[addr];
 }
