@@ -40,6 +40,7 @@ int main() {
 
   bool quit = false;
   SDL_Event event;
+  uint16_t ramPage = 0;
 
   // Convert hex string into bytes for RAM
   std::stringstream ss;
@@ -62,10 +63,33 @@ int main() {
     while (SDL_PollEvent(&event)) {
       if (event.type == SDL_QUIT) {
         quit = true;
+      } else if (event.type == SDL_KEYDOWN) {
+        switch (event.key.keysym.sym) {
+          case SDLK_LEFT:
+            ramPage -= 1;
+            break;
+          case SDLK_RIGHT:
+            ramPage += 1;
+            break;
+          case SDLK_SPACE:
+            do {
+              bus.getCpu()->clock();
+            } while (!bus.getCpu()->isComplete());
+            break;
+          case SDLK_n:
+            bus.getCpu()->nmi();
+            break;
+          case SDLK_i:
+            bus.getCpu()->irq();
+            break;
+          case SDLK_r:
+            bus.getCpu()->reset();
+            break;
+        }
       }
     }
     window.clear();
-    window.renderRAM(bus.getRam(), 0);
+    window.renderRAM(bus.getRam(), ramPage);
     window.renderProcessor(bus.getCpu());
     window.renderCode(mapLines, bus.getCpu()->getPC(), 25);
     window.update();
