@@ -74,7 +74,7 @@ bool Cpu6502::isComplete() {
   return this->cycles == 0;
 }
 
-std::map<uint16_t, std::string> Cpu6502::disassemble(uint16_t start, uint16_t end) {
+std::map<uint16_t, std::string> Cpu6502::disassemble(uint32_t start, uint32_t end) {
   std::map<uint16_t, std::string> mapLines;
   uint32_t addr = start;
   uint32_t lineAddr;
@@ -97,7 +97,8 @@ std::map<uint16_t, std::string> Cpu6502::disassemble(uint16_t start, uint16_t en
       addr += 1;
       high = this->readOnly(addr);
       addr += 1;
-      instruction += "$" + hexToString((uint16_t)(high << 8) || low, 4) + " ";
+      uint16_t value = (high << 8) | low;
+      instruction += "$" + hexToString(value, 4) + " ";
     }
     instruction += "{" + this->lookup[opcode].modeName + "}";
     mapLines[lineAddr] = instruction;

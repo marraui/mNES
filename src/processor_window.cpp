@@ -110,7 +110,7 @@ void ProcessorWindow::renderProcessor(Cpu6502* cpu) {
   str = "A: $" + hexToString(cpu->getAcc(), 2) + " [" + std::to_string(cpu->getAcc()) + "]";
   this->textTexture.loadFromRenderedText(str, this->renderer, { 0xFF, 0xFF, 0xFF });
   this->render(&this->textTexture, 0, 18 * 10);
-  str = "X: $" + hexToString(cpu->getX(), 2) + " [" + std::to_string(cpu->getY()) + "]";
+  str = "X: $" + hexToString(cpu->getX(), 2) + " [" + std::to_string(cpu->getX()) + "]";
   this->textTexture.loadFromRenderedText(str, this->renderer, { 0xFF, 0xFF, 0xFF });
   this->render(&this->textTexture, 0, 19 * 10);
   str = "Y: $" + hexToString(cpu->getY(), 2) + " [" + std::to_string(cpu->getY()) + "]";
