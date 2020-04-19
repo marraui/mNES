@@ -4,6 +4,7 @@
 #include <iostream>
 #include "NES/cartridge.h"
 #include "NES/utils.h"
+#include "NES/mapper_0.h"
 
 Cartridge::Cartridge(std::string filename) {
   std::ifstream romFile;
@@ -34,11 +35,23 @@ Cartridge::Cartridge(std::string filename) {
     return;
   }
 
-  unsigned long prgSize = buffer[4] * 16384;
-  unsigned long chrSize = buffer[5] * 8192;
+  uint8_t prgBanks = buffer[4];
+  uint8_t chrBanks = buffer[5];
+  unsigned long prgSize = prgBanks * 16384;
+  unsigned long chrSize = chrBanks * 8192;
 
+  // Select mapper
+  unsigned int mapperId = (buffer[7] & 0xF0) | (buffer[0] & 0xF0);
 
-  this->mapper = (buffer[7] & 0xF0) | (buffer[0] & 0xF0);
+  switch(mapperId) {
+    case 0:
+      this->mapper = new Mapper0(prgBanks, chrBanks);
+      break;
+    default:
+      this->mapper = new Mapper0(prgBanks, chrBanks);
+      break;
+  }
+
   this->options = buffer[6] & 0x0F;
 
   // Not used yet
@@ -67,14 +80,22 @@ Cartridge::Cartridge(std::string filename) {
 
 Cartridge::~Cartridge() {}
 
-uint8_t Cartridge::cpuRead(uint16_t address) {
-  return 0;
+uint8_t Cartridge::cpuRead(uint16_t address, bool readOnly) {
+  uint16_t mappedAddr = this->mapper->cpuMapRead(address);
+  return this->prg[mappedAddr];
 }
 
-void Cartridge::cpuWrite(uint16_t address, uint8_t value) {}
+void Cartridge::cpuWrite(uint16_t address, uint8_t value) {
+  uint16_t mappedAddr = this->mapper->cpuMapWrite(address, value);
+  this->prg[mappedAddr] = value;
+}
 
 uint8_t Cartridge::ppuRead(uint16_t address) {
-  return 0;
+  uint16_t mappedAddr = this->mapper->ppuMapRead(address);
+  return this->chr[mappedAddr];
 }
 
-void Cartridge::ppuWrite(uint16_t address, uint8_t value) {}
+void Cartridge::ppuWrite(uint16_t address, uint8_t value) {
+  uint16_t mappedAddr = this->mapper->ppuMapWrite(address, value);
+  this->chr[mappedAddr] = value;
+}
