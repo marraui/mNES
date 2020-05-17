@@ -16,7 +16,7 @@ ProcessorWindow::ProcessorWindow() {
 
 ProcessorWindow::~ProcessorWindow() {}
 
-void ProcessorWindow::renderRAM(uint8_t ram[64 * 1064], uint16_t page) {
+void ProcessorWindow::renderRAM(uint8_t ram[2048], uint16_t page) {
   uint32_t offset = page * 256;
   for (int i = 0; i < 16; i++) {
     std::string row = "$" + hexToString(page, 2) + hexToString(i, 1) + "0: ";
