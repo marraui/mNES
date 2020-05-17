@@ -25,6 +25,10 @@ add_executable(NES
   ./src/utils.cpp
   ./src/processor_window.cpp
   ./src/cartridge.cpp
+  ./src/main_window.cpp
+  ./src/pixel_texture.cpp
+  ./src/ppu2C02.cpp
+  ./src/mapper_0.cpp
 )
 target_link_libraries(NES PRIVATE
   SDL2::SDL2
