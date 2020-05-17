@@ -110,7 +110,7 @@ int main(int argc, char ** argv) {
             bus.getCpu()->reset();
             break;
           case SDLK_RETURN:
-            run = true;
+            run = !run;
             break;
         }
       }
