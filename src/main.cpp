@@ -1,4 +1,6 @@
 #include <iostream>
+#include <vector>
+#include <algorithm>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_ttf.h>
@@ -6,9 +8,12 @@
 #include <string>
 #include "NES/bus.h"
 #include "NES/processor_window.h"
+#include "NES/main_window.h"
 #include "NES/texture.h"
 #include "NES/text_texture.h"
 #include "NES/utils.h"
+#include "NES/cartridge.h"
+#include "NES/ppu2C02.h"
 
 void initializeSDL() {
   // Initialize SDL with video
@@ -31,50 +36,69 @@ void initializeSDL() {
   }
 }
 
-int main() {
+void quitSDL() {
+  //Quit SDL subsystems
+  TTF_Quit();
+  IMG_Quit();
+  SDL_Quit();
+}
+
+int main(int argc, char ** argv) {
   initializeSDL();
+
   Bus bus = Bus();
-  ProcessorWindow window = ProcessorWindow();
-  window.init();
-  TextTexture textTexture = TextTexture();
+  Cartridge* cart = new Cartridge("nestest.ines");
+  bus.insertCatridge(cart);
 
   bool quit = false;
   SDL_Event event;
-  uint16_t ramPage = 0;
-
-  // Convert hex string into bytes for RAM
-  std::stringstream ss;
-  ss << "A2 0A 8E 00 00 A2 03 8E 01 00 AC 00 00 A9 00 18 6D 01 00 88 D0 FA 8D 02 00 EA EA EA";
-  uint16_t nOffset = 0x8000;
-  while (!ss.eof()) {
-    std::string byte;
-    ss >> byte;
-    bus.write(nOffset, (uint8_t)std::stoul(byte, nullptr, 16));
-    nOffset += 1;
-  }
-  // Set up reset vector
-  bus.write(0xFFFC, 0x00);
-  bus.write(0xFFFD, 0x80);
-
+  uint8_t ramPage = 0;
   std::map<uint16_t, std::string> mapLines = bus.getCpu()->disassemble(0x0000, 0xFFFF);
-  bus.getCpu()->reset();
+  bus.reset();
+
+  ProcessorWindow processorWindow = ProcessorWindow();
+  processorWindow.init();
+
+  MainWindow mainWindow = MainWindow();
+
+  bool run = false;
+  unsigned long lastFrameTime = SDL_GetTicks();
 
   while (!quit) {
     while (SDL_PollEvent(&event)) {
       if (event.type == SDL_QUIT) {
         quit = true;
+      } else if (
+        event.type == SDL_WINDOWEVENT &&
+        event.window.event == SDL_WINDOWEVENT_CLOSE
+      ) {
+        if (
+          processorWindow.isInitialized() &&
+          event.window.windowID == processorWindow.getWindowId()
+        ) {
+          processorWindow.destroy();
+        } else if (
+          mainWindow.isInitialized() &&
+          event.window.windowID == mainWindow.getWindowId()
+        ) {
+          mainWindow.destroy();
+        }
       } else if (event.type == SDL_KEYDOWN) {
         switch (event.key.keysym.sym) {
           case SDLK_LEFT:
-            ramPage -= 1;
+            ramPage = (ramPage + 8 - 1) % 8;
             break;
           case SDLK_RIGHT:
-            ramPage += 1;
+            ramPage = (ramPage + 1) % 8;
             break;
           case SDLK_SPACE:
+            if (run) break;
             do {
-              bus.getCpu()->clock();
+              bus.clock();
             } while (!bus.getCpu()->isComplete());
+            do {
+              bus.clock();
+            } while (bus.getCpu()->isComplete());
             break;
           case SDLK_n:
             bus.getCpu()->nmi();
@@ -85,17 +109,40 @@ int main() {
           case SDLK_r:
             bus.getCpu()->reset();
             break;
+          case SDLK_RETURN:
+            run = true;
+            break;
         }
       }
     }
-    window.clear();
-    window.renderRAM(bus.getRam(), ramPage);
-    window.renderProcessor(bus.getCpu());
-    window.renderCode(mapLines, bus.getCpu()->getPC(), 25);
-    window.update();
+    if (run) {
+      do {
+        bus.clock();
+      } while (!bus.getPpu()->isFrameComplete());
+      do {
+        bus.clock();
+      } while (bus.getPpu()->isFrameComplete());
+    }
+    if (processorWindow.isInitialized()) {
+      processorWindow.clear();
+      processorWindow.renderRAM(bus.getRam(), ramPage);
+      processorWindow.renderProcessor(bus.getCpu());
+      processorWindow.renderCode(mapLines, bus.getCpu()->getPC(), 25);
+      processorWindow.update();
+    }
+    if (mainWindow.isInitialized()) {
+      mainWindow.clear();
+      std::vector<SDL_Color> colors(
+        (SDL_Color*)bus.getPpu()->getScreen(),
+        (SDL_Color*)bus.getPpu()->getScreen() + 256 * 240
+      );
+      mainWindow.updateScreenTexture(colors);
+      mainWindow.update();
+    }
+    unsigned long newFrameTime = SDL_GetTicks();
+    std::cout << "Frame time: " << newFrameTime - lastFrameTime << " ms" << std::endl;
+    lastFrameTime = newFrameTime;
   }
-  textTexture.freeFont();
-  textTexture.free();
-  window.destroy();
+  quitSDL();
   return 0;
 }
