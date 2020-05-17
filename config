@@ -21,9 +21,17 @@ build () {
 
 build_cmake() {
   echo "Building..."
-  mkdir build
-  cd build
-  cmake .. -DCMAKE_TOOLCHAIN_FILE="$VCPKG_PATH/scripts/buildsystems/vcpkg.cmake"
+  GENERATOR_STRING=""
+  if [ $GENERATOR ]
+  then
+    GENERATOR_STRING="-G $GENERATOR"
+    mkdir $GENERATOR
+    cd $GENERATOR
+  else
+    mkdir build
+    cd build
+  fi
+  eval "cmake .. -DCMAKE_TOOLCHAIN_FILE=\"$VCPKG_PATH/scripts/buildsystems/vcpkg.cmake\" $GENERATOR_STRING"
   echo "Finished building!"
 }
 
@@ -40,6 +48,8 @@ VCPKG_PATH=${VCPKG_PATH[1]}
 
 SCRIPT=$1
 
+GENERATOR=$2
+
 case $SCRIPT in
 
   "build")
@@ -47,7 +57,7 @@ case $SCRIPT in
     ;;
 
   "build:cmake")
-    build_cmake $VCPKG_PATH
+    build_cmake $VCPKG_PATH $GENERATOR
     ;;
 
   "clean")
