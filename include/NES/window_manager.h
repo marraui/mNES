@@ -17,8 +17,7 @@ class WindowManager {
     void update();
     void render(
       Texture* texture,
-      int x,
-      int y,
+      SDL_Rect* renderQuad = nullptr,
       SDL_Rect* clip = nullptr,
       double angle = 0,
       SDL_Point* center = nullptr,

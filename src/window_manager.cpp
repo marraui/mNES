@@ -37,20 +37,21 @@ void WindowManager::destroy() {
 
 void WindowManager::render(
   Texture* texture,
-  int x,
-  int y,
+  SDL_Rect* renderQuad,
   SDL_Rect* clip,
   double angle,
   SDL_Point* center,
   SDL_RendererFlip flip
 ) {
-  SDL_Rect renderQuad = { x, y, texture->getWidth() , texture->getHeight() };
-  if (clip != nullptr) {
-    renderQuad.w = clip->w;
-    renderQuad.h = clip->h;
+  if (renderQuad == nullptr) {
+    renderQuad = new SDL_Rect{ 0, 0, texture->getWidth(), texture->getHeight() };
+    if (clip != nullptr) {
+      renderQuad->w = clip->w;
+      renderQuad->h = clip->h;
+    }
   }
 
-  int errorCode = SDL_RenderCopyEx(this->renderer, texture->getTexture(), clip, &renderQuad, angle, center, flip);
+  int errorCode = SDL_RenderCopyEx(this->renderer, texture->getTexture(), clip, renderQuad, angle, center, flip);
   if (errorCode < 0) {
     std::cout << "Error rendering texture: " << SDL_GetError() << std::endl;
   }
