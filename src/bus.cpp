@@ -2,9 +2,13 @@
 #include <cstdint>
 #include "NES/bus.h"
 #include "NES/cpu6502.h"
+#include "NES/ppu2C02.h"
 #include <functional>
 Bus::Bus() {
-  for (int i = 0; i < 64 * 1024; i++) this->ram[i] = 0x00;
+  this->clockCounter = 0;
+
+  for (int i = 0; i < 2048; i++) this->ram[i] = 0x00;
+
   Cpu6502* cpu = new Cpu6502(
     [&](uint16_t addr, uint8_t data) -> void {
       this->cpuWrite(addr, data);
@@ -14,6 +18,17 @@ Bus::Bus() {
     }
   );
   this->cpu = cpu;
+
+  Ppu2C02* ppu = new Ppu2C02(
+    [&](uint16_t addr, uint8_t data) -> void {
+      this->ppuWrite(addr, data);
+    },
+    [&](uint16_t addr, bool readOnly) -> uint8_t {
+      return this->ppuRead(addr, readOnly);
+    }
+  );
+  this->ppu = ppu;
+
   std::cout << "Bus object initialized" << std::endl;
 }
 
@@ -35,6 +50,14 @@ uint8_t Bus::cpuRead(uint16_t addr, bool readOnly) {
   return 0x00;
 }
 
+void Bus::ppuWrite(uint16_t addr, uint8_t data) {
+  this->cartridge->ppuWrite(addr, data);
+}
+
+uint8_t Bus::ppuRead(uint16_t addr, bool readOnly) {
+  return this->cartridge->ppuRead(addr);
+}
+
 uint8_t* Bus::getRam() {
   return this->ram;
 }
@@ -45,8 +68,21 @@ Cpu6502* Bus::getCpu() {
 
 void Bus::reset() {
   this->cpu->reset();
+  this->clockCounter = 0;
 }
 
 void Bus::insertCatridge(Cartridge* cartridge) {
   this->cartridge = cartridge;
+}
+
+void Bus::clock() {
+  this->ppu->clock();
+
+  if (this->clockCounter % 3 == 0) {
+    this->cpu->clock();
+  }
+}
+
+Ppu2C02* Bus::getPpu() {
+  return this->ppu;
 }
