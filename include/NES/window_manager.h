@@ -1,6 +1,7 @@
 #ifndef WINDOW_MANAGER_H
 #define WINDOW_MANAGER_H
 #include <SDL2/SDL.h>
+#include <cstdint>
 #include "texture.h"
 
 class WindowManager {
@@ -26,6 +27,8 @@ class WindowManager {
     SDL_Renderer* getRenderer();
     int getWidth();
     int getHeight();
+    uint32_t getWindowId();
+    bool isInitialized();
 };
 
 #endif // WINDOW_MANAGER_H

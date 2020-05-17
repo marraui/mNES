@@ -19,7 +19,7 @@ void WindowManager::init() {
     return;
   }
   
-  this->renderer = SDL_CreateRenderer(this->window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+  this->renderer = SDL_CreateRenderer(this->window, -1, SDL_RENDERER_ACCELERATED);
   if (this->renderer == nullptr) {
     std::cout << "SDL couldn't create renderer, error: " << SDL_GetError() << std::endl;
     return;
@@ -33,11 +33,6 @@ void WindowManager::destroy() {
   SDL_DestroyWindow(this->window);
   this->window = nullptr;
   this->renderer = nullptr;
-
-  //Quit SDL subsystems
-	TTF_Quit();
-	IMG_Quit();
-	SDL_Quit();
 }
 
 void WindowManager::render(
@@ -55,7 +50,10 @@ void WindowManager::render(
     renderQuad.h = clip->h;
   }
 
-  SDL_RenderCopyEx(this->renderer, texture->getTexture(), clip, &renderQuad, angle, center, flip);
+  int errorCode = SDL_RenderCopyEx(this->renderer, texture->getTexture(), clip, &renderQuad, angle, center, flip);
+  if (errorCode < 0) {
+    std::cout << "Error rendering texture: " << SDL_GetError() << std::endl;
+  }
 }
 
 void WindowManager::clear() {
@@ -81,4 +79,12 @@ int WindowManager::getHeight() {
   int h;
   SDL_GetWindowSize(this->window, nullptr, &h);
   return h;
+}
+
+uint32_t WindowManager::getWindowId() {
+  return SDL_GetWindowID(this->window);
+}
+
+bool WindowManager::isInitialized() {
+  return this->window != nullptr && this->renderer != nullptr;
 }
