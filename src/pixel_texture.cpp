@@ -49,7 +49,7 @@ void PixelTexture::setPixel(int x, int y, SDL_Color color) {
 
 void PixelTexture::setAll(std::vector<SDL_Color> colors, int rowSize) {
   int pitch = 4 * rowSize; // (r, g, b, a) * number of pixels in one row
-  uint32_t* lockedPixels = new uint32_t[colors.size()];
+  uint32_t* lockedPixels;
   SDL_LockTexture(this->texture, nullptr, (void**)(&lockedPixels), &pitch);
   std::transform(colors.begin(), colors.end(), lockedPixels, [&](SDL_Color color) -> uint32_t {
     return SDL_MapRGB(this->pixelFormat, color.r, color.g, color.b);

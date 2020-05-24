@@ -30,6 +30,8 @@ bool TextTexture::loadFromRenderedText(std::string text, SDL_Renderer* renderer,
   }
 
   SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
+
+  SDL_FreeSurface(surface);
   if (texture == nullptr) {
     std::cout << "Unable to create texture from rendered text, error: " << SDL_GetError() << std::endl;
     return false; 

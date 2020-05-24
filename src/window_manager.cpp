@@ -7,6 +7,7 @@
 
 WindowManager::WindowManager() {
   this->window = nullptr;
+  this->renderer = nullptr;
 }
 
 WindowManager::~WindowManager() {}
@@ -29,10 +30,14 @@ void WindowManager::init() {
 }
 
 void WindowManager::destroy() {
-  SDL_DestroyRenderer(this->renderer);
-  SDL_DestroyWindow(this->window);
-  this->window = nullptr;
-  this->renderer = nullptr;
+  if (this->renderer != nullptr) {
+    SDL_DestroyRenderer(this->renderer);
+    this->renderer = nullptr;
+  }
+  if (this->window != nullptr) {
+    SDL_DestroyWindow(this->window);
+    this->window = nullptr;
+  }
 }
 
 void WindowManager::render(

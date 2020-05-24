@@ -14,10 +14,10 @@ Cartridge::Cartridge(std::string filename) {
     return;
   }
 
-  char* buffer = new char[10];
+  char buffer[10];
 
   // Header
-  romFile.read(buffer, 11);
+  romFile.read(buffer, 10);
 
   std::cout << "NES Header ";
   for (int i = 0; i < 8; i++) {
