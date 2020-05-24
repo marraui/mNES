@@ -14,7 +14,16 @@ build () {
   echo "Building..."
   mkdir build
   cd build
-  cmake .. -DCMAKE_TOOLCHAIN_FILE="$VCPKG_PATH/scripts/buildsystems/vcpkg.cmake"
+  cmake .. -DCMAKE_TOOLCHAIN_FILE="$VCPKG_PATH/scripts/buildsystems/vcpkg.cmake" -D CMAKE_BUILD_TYPE=Debug
+  make
+  echo "Finished building!"
+}
+
+build_release() {
+  echo "Building..."
+  mkdir build
+  cd build
+  cmake .. -DCMAKE_TOOLCHAIN_FILE="$VCPKG_PATH/scripts/buildsystems/vcpkg.cmake" -D CMAKE_BUILD_TYPE=Release
   make
   echo "Finished building!"
 }
@@ -54,6 +63,10 @@ case $SCRIPT in
 
   "build")
     build $VCPKG_PATH
+    ;;
+
+  "build:release")
+    build_release $VCPKG_PATH
     ;;
 
   "build:cmake")
