@@ -29,6 +29,23 @@ void WindowManager::init() {
   SDL_SetRenderDrawColor(this->renderer, 0xFF, 0xFF, 0xFF, 0xFF);
 }
 
+void WindowManager::init(const void* winId) {
+  // Create window
+  this->window = SDL_CreateWindowFrom(winId);
+  if (this->window == nullptr) {
+    std::cout << "SDL couldn't create window, SDL error:" << std::endl << SDL_GetError() << std::endl;
+    return;
+  }
+  
+  this->renderer = SDL_CreateRenderer(this->window, -1, SDL_RENDERER_ACCELERATED);
+  if (this->renderer == nullptr) {
+    std::cout << "SDL couldn't create renderer, error: " << SDL_GetError() << std::endl;
+    return;
+  }
+
+  SDL_SetRenderDrawColor(this->renderer, 0xFF, 0xFF, 0xFF, 0xFF);
+}
+
 void WindowManager::destroy() {
   if (this->renderer != nullptr) {
     SDL_DestroyRenderer(this->renderer);

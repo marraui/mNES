@@ -12,6 +12,7 @@ class WindowManager {
     WindowManager();
     ~WindowManager();
     void init();
+    void init(const void* winId);
     void destroy();
     void clear();
     void update();

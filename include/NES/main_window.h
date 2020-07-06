@@ -10,6 +10,7 @@ class MainWindow: public WindowManager {
     PixelTexture* pixelTexture;
   public:
     MainWindow();
+    MainWindow(const void* winId);
     ~MainWindow();
     void updateScreenTexture(std::vector<SDL_Color> colors, int rowSize = 256);
 };

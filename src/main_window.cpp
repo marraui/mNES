@@ -14,6 +14,13 @@ MainWindow::MainWindow() {
   this->pixelTexture->create(this->renderer, 256, 240);
 }
 
+MainWindow::MainWindow(const void* winId) {
+  WindowManager();
+  this->init(winId);
+  this->pixelTexture = new PixelTexture();
+  this->pixelTexture->create(this->renderer, 256, 240);
+}
+
 MainWindow::~MainWindow() {}
 
 void MainWindow::updateScreenTexture(std::vector<SDL_Color> colors, int rowSize) {
