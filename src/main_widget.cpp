@@ -36,8 +36,13 @@ MainWidget::~MainWidget() {
 
 void MainWidget::closeEvent(QCloseEvent* event) {
   this->shoudlQuit = true;
-  if (this->processorWindow->isInitialized()) this->processorWindow->destroy();
-  this->mainWindow->destroy();
+  if (
+    this->processorWindow != nullptr &&
+    this->processorWindow->isInitialized()
+  ) {
+    this->processorWindow->destroy();
+  }
+  if (this->processorWindow != nullptr) this->mainWindow->destroy();
   event->accept();
 }
 
@@ -149,7 +154,7 @@ void MainWidget::mainLoop(std::string fileName) {
       this->mainWindow->update();
     }
     unsigned long newFrameTime = SDL_GetTicks();
-    std::cout << "Frame time: " << newFrameTime - lastFrameTime << " ms" << std::endl;
+    // std::cout << "Frame time: " << newFrameTime - lastFrameTime << " ms" << std::endl;
     lastFrameTime = newFrameTime;
   }
 }
