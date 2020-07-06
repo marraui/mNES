@@ -1,19 +1,9 @@
 #include <iostream>
-#include <vector>
-#include <algorithm>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_ttf.h>
-#include <sstream>
-#include <string>
-#include "NES/bus.h"
-#include "NES/processor_window.h"
-#include "NES/main_window.h"
-#include "NES/texture.h"
-#include "NES/text_texture.h"
-#include "NES/utils.h"
-#include "NES/cartridge.h"
-#include "NES/ppu2C02.h"
+#include <QtWidgets/QApplication>
+#include "NES/main_widget.h"
 
 void initializeSDL() {
   // Initialize SDL with video
@@ -45,104 +35,13 @@ void quitSDL() {
 
 int main(int argc, char ** argv) {
   initializeSDL();
+  QApplication application(argc, argv);
+  MainWidget widget;
+  widget.show();
 
-  Bus bus = Bus();
-  Cartridge* cart = new Cartridge("nestest.ines");
-  bus.insertCatridge(cart);
+  int res = application.exec();
 
-  bool quit = false;
-  SDL_Event event;
-  uint8_t ramPage = 0;
-  std::map<uint16_t, std::string> mapLines = bus.getCpu()->disassemble(0x0000, 0xFFFF);
-  bus.reset();
-
-  ProcessorWindow processorWindow = ProcessorWindow();
-  processorWindow.init();
-
-  MainWindow mainWindow = MainWindow();
-
-  bool run = false;
-  unsigned long lastFrameTime = SDL_GetTicks();
-
-  while (!quit) {
-    while (SDL_PollEvent(&event)) {
-      if (event.type == SDL_QUIT) {
-        quit = true;
-      } else if (
-        event.type == SDL_WINDOWEVENT &&
-        event.window.event == SDL_WINDOWEVENT_CLOSE
-      ) {
-        if (
-          processorWindow.isInitialized() &&
-          event.window.windowID == processorWindow.getWindowId()
-        ) {
-          processorWindow.destroy();
-        } else if (
-          mainWindow.isInitialized() &&
-          event.window.windowID == mainWindow.getWindowId()
-        ) {
-          mainWindow.destroy();
-        }
-      } else if (event.type == SDL_KEYDOWN) {
-        switch (event.key.keysym.sym) {
-          case SDLK_LEFT:
-            ramPage = (ramPage + 8 - 1) % 8;
-            break;
-          case SDLK_RIGHT:
-            ramPage = (ramPage + 1) % 8;
-            break;
-          case SDLK_SPACE:
-            if (run) break;
-            do {
-              bus.clock();
-            } while (!bus.getCpu()->isComplete());
-            do {
-              bus.clock();
-            } while (bus.getCpu()->isComplete());
-            break;
-          case SDLK_n:
-            bus.getCpu()->nmi();
-            break;
-          case SDLK_i:
-            bus.getCpu()->irq();
-            break;
-          case SDLK_r:
-            bus.getCpu()->reset();
-            break;
-          case SDLK_RETURN:
-            run = !run;
-            break;
-        }
-      }
-    }
-    if (run) {
-      do {
-        bus.clock();
-      } while (!bus.getPpu()->isFrameComplete());
-      do {
-        bus.clock();
-      } while (bus.getPpu()->isFrameComplete());
-    }
-    if (processorWindow.isInitialized()) {
-      processorWindow.clear();
-      processorWindow.renderRAM(bus.getRam(), ramPage);
-      processorWindow.renderProcessor(bus.getCpu());
-      processorWindow.renderCode(mapLines, bus.getCpu()->getPC(), 25);
-      processorWindow.update();
-    }
-    if (mainWindow.isInitialized()) {
-      mainWindow.clear();
-      std::vector<SDL_Color> colors(
-        (SDL_Color*)bus.getPpu()->getScreen(),
-        (SDL_Color*)bus.getPpu()->getScreen() + 256 * 240
-      );
-      mainWindow.updateScreenTexture(colors);
-      mainWindow.update();
-    }
-    unsigned long newFrameTime = SDL_GetTicks();
-    std::cout << "Frame time: " << newFrameTime - lastFrameTime << " ms" << std::endl;
-    lastFrameTime = newFrameTime;
-  }
   quitSDL();
-  return 0;
+
+  return res;
 }

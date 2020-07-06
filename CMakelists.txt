@@ -1,3 +1,5 @@
+set(MACOSX_BUNDLE ON)
+
 # cmake version to be used
 cmake_minimum_required(VERSION 3.1)
 
@@ -5,15 +7,27 @@ set (CMAKE_CXX_STANDARD 14)
 # project name
 project(NES)
 
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
+set(CMAKE_AUTOUIC ON)
+
+if(CMAKE_VERSION VERSION_LESS "3.7.0")
+  set(CMAKE_INCLUDE_CURRENT_DIR ON)
+endif()
+
 # include
 include_directories(./include)
 
 find_package(SDL2 CONFIG REQUIRED)
 find_package(SDL2-image CONFIG REQUIRED)
 find_package(sdl2-ttf CONFIG REQUIRED)
+find_package(Qt5 COMPONENTS Core Widgets Gui REQUIRED)
 
-# target
-add_executable(NES
+qt5_wrap_cpp(MOC_SOURCES
+  ./include/NES/main_widget.h
+)
+
+SET(COMMON_FILES
   ./src/main.cpp
   ./src/bus.cpp
   ./src/cpu6502.cpp
@@ -28,13 +42,29 @@ add_executable(NES
   ./src/pixel_texture.cpp
   ./src/ppu2C02.cpp
   ./src/mapper_0.cpp
+  ./src/main_widget.cpp
+)
+
+IF(APPLE)
+  SET(CMAKE_EXE_LINKER_FLAGS "-framework Foundation -framework Cocoa -w")
+  SET(PLATFORM_FILES ./src/mac/get_nswindow.mm)
+ENDIF()
+
+# target
+add_executable(NES
+  ${COMMON_FILES}
+  ${MOC_SOURCES}
+  ${PLATFORM_FILES}
 )
 target_link_libraries(NES PRIVATE
   SDL2::SDL2
   SDL2::SDL2_image
   SDL2::SDL2_ttf
+  Qt5::Core
+  Qt5::Widgets
+  Qt5::Gui
 )
 
 file(COPY assets DESTINATION ${CMAKE_BINARY_DIR})
 
-install(TARGETS NES DESTINATION bin)
+install(TARGETS NES DESTINATION /Users/marraui/Dev/mNES/install BUNDLE)
