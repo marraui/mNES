@@ -26,6 +26,11 @@ void WindowManager::init() {
     return;
   }
 
+  SDL_RendererInfo rendererInfo;
+  SDL_GetRendererInfo(this->renderer, &rendererInfo);
+
+  std::cout << "Renderer: " << rendererInfo.name << std::endl;
+
   SDL_SetRenderDrawColor(this->renderer, 0xFF, 0xFF, 0xFF, 0xFF);
 }
 

@@ -1,8 +1,10 @@
 #include <iostream>
 #include <string>
 #include <functional>
+#include <map>
 #include <QtWidgets/QtWidgets>
 #include <QtGui/QCloseEvent>
+#include <QtCore/QTimer>
 #include <SDL2/SDL.h>
 #include "NES/main_widget.h"
 #include "NES/bus.h"
@@ -30,12 +32,14 @@ MainWidget::MainWidget(
 
 MainWidget::~MainWidget() {
   delete this->fileMenu;
+  delete this->widget;
   delete this->mainWindow;
   delete this->processorWindow;
+  delete this->bus;
 }
 
 void MainWidget::closeEvent(QCloseEvent* event) {
-  this->shoudlQuit = true;
+  this->shouldQuit = true;
   if (
     this->processorWindow != nullptr &&
     this->processorWindow->isInitialized()
@@ -47,11 +51,19 @@ void MainWidget::closeEvent(QCloseEvent* event) {
 }
 
 void MainWidget::open() {
-  std::string fileName = QFileDialog::getOpenFileName(this, tr("Open File"), "/").toStdString();
-  this->mainLoop(fileName);
+  QString qFileName = QFileDialog::getOpenFileName(this, tr("Open File"), "/");
+  if (qFileName.isNull()) return;
+  std::string fileName = qFileName.toStdString();
+  std::cout << "File name: " << fileName << std::endl;
+  this->init(fileName);
 }
 
-void MainWidget::mainLoop(std::string fileName) {
+void MainWidget::onApplicationStateChange(Qt::ApplicationState state) {
+  std::cout << "Application state changed: " << (int)state << std::endl;
+  this->justMove();
+}
+
+void MainWidget::init(std::string fileName) {
   this->loopComplete = false;
   const void* winId = (const void*)this->centralWidget()->effectiveWinId();
   #ifdef __APPLE__
@@ -59,102 +71,112 @@ void MainWidget::mainLoop(std::string fileName) {
   #endif // __APPLE__
 
 
-  Bus bus = Bus();
+  this->bus = new Bus();
   Cartridge* cart = new Cartridge(fileName);
-  bus.insertCatridge(cart);
+  this->bus->insertCatridge(cart);
 
-  bool quit = false;
-  SDL_Event event;
-  uint8_t ramPage = 0;
-  std::map<uint16_t, std::string> mapLines = bus.getCpu()->disassemble(0x0000, 0xFFFF);
-  bus.reset();
+  this->ramPage = 0;
+  this->mapLines = this->bus->getCpu()->disassemble(0x0000, 0xFFFF);
+  this->bus->reset();
 
   this->processorWindow = new ProcessorWindow();
   this->processorWindow->init();
 
   this->mainWindow = new MainWindow(winId);
 
-  bool run = false;
-  unsigned long lastFrameTime = SDL_GetTicks();
+  this->run = false;
+  this->lastFrameTime = SDL_GetTicks();
+  this->mainLoop();
+  QTimer::singleShot(0, this, &MainWidget::justMove);
 
-  while (!this->shoudlQuit && !quit) {
-    while (SDL_PollEvent(&event)) {
-      if (event.type == SDL_QUIT) {
-        quit = true;
-      } else if (event.type == SDL_WINDOWEVENT) {
-        if (event.window.event == SDL_WINDOWEVENT_CLOSE) {
-          if (
-            this->processorWindow->isInitialized() &&
-            event.window.windowID == this->processorWindow->getWindowId()
-          ) {
-            this->processorWindow->destroy();
-          } else if (
-            this->mainWindow->isInitialized() &&
-            event.window.windowID == this->mainWindow->getWindowId()
-          ) {
-            this->mainWindow->destroy();
-          }
-        } else if (event.window.event == SDL_WINDOWEVENT_RESIZED) {
-          std::cout << "resize" << std::endl;
+}
+
+void MainWidget::justMove() {
+  this->move(this->pos().x() + 1, this->pos().y());
+  this->move(this->pos().x() - 1, this->pos().y());
+}
+
+void MainWidget::mainLoop() {
+  SDL_Event event;
+  while (SDL_PollEvent(&event)) {
+    if (event.type == SDL_QUIT) {
+      this->shouldQuit = true;
+    } else if (event.type == SDL_WINDOWEVENT) {
+      if (event.window.event == SDL_WINDOWEVENT_CLOSE) {
+        if (
+          this->processorWindow->isInitialized() &&
+          event.window.windowID == this->processorWindow->getWindowId()
+        ) {
+          this->processorWindow->destroy();
+        } else if (
+          this->mainWindow->isInitialized() &&
+          event.window.windowID == this->mainWindow->getWindowId()
+        ) {
+          this->mainWindow->destroy();
         }
-      } else if (event.type == SDL_KEYDOWN) {
-        switch (event.key.keysym.sym) {
-          case SDLK_LEFT:
-            ramPage = (ramPage + 8 - 1) % 8;
-            break;
-          case SDLK_RIGHT:
-            ramPage = (ramPage + 1) % 8;
-            break;
-          case SDLK_SPACE:
-            if (run) break;
-            do {
-              bus.clock();
-            } while (!bus.getCpu()->isComplete());
-            do {
-              bus.clock();
-            } while (bus.getCpu()->isComplete());
-            break;
-          case SDLK_n:
-            bus.getCpu()->nmi();
-            break;
-          case SDLK_i:
-            bus.getCpu()->irq();
-            break;
-          case SDLK_r:
-            bus.getCpu()->reset();
-            break;
-          case SDLK_RETURN:
-            run = !run;
-            break;
-        }
+      } else if (event.window.event == SDL_WINDOWEVENT_RESIZED) {
+        std::cout << "resize" << std::endl;
+      }
+    } else if (event.type == SDL_KEYDOWN) {
+      switch (event.key.keysym.sym) {
+        case SDLK_LEFT:
+          ramPage = (ramPage + 8 - 1) % 8;
+          break;
+        case SDLK_RIGHT:
+          ramPage = (ramPage + 1) % 8;
+          break;
+        case SDLK_SPACE:
+          if (this->run) break;
+          do {
+            this->bus->clock();
+          } while (!this->bus->getCpu()->isComplete());
+          do {
+            this->bus->clock();
+          } while (this->bus->getCpu()->isComplete());
+          break;
+        case SDLK_n:
+          this->bus->getCpu()->nmi();
+          break;
+        case SDLK_i:
+          this->bus->getCpu()->irq();
+          break;
+        case SDLK_r:
+          this->bus->getCpu()->reset();
+          break;
+        case SDLK_RETURN:
+          this->run = !this->run;
+          break;
       }
     }
-    if (run) {
-      do {
-        bus.clock();
-      } while (!bus.getPpu()->isFrameComplete());
-      do {
-        bus.clock();
-      } while (bus.getPpu()->isFrameComplete());
-    }
-    if (this->processorWindow->isInitialized()) {
-      this->processorWindow->clear();
-      this->processorWindow->renderRAM(bus.getRam(), ramPage);
-      this->processorWindow->renderProcessor(bus.getCpu());
-      this->processorWindow->renderCode(mapLines, bus.getCpu()->getPC(), 25);
-      this->processorWindow->update();
-    }
-    if (this->mainWindow->isInitialized()) {
-      this->mainWindow->clear();
-      std::vector<SDL_Color> colors(
-        (SDL_Color*)bus.getPpu()->getScreen(),
-        (SDL_Color*)bus.getPpu()->getScreen() + 256 * 240
-      );
-      this->mainWindow->updateScreenTexture(colors);
-      this->mainWindow->update();
-    }
-    unsigned long newFrameTime = SDL_GetTicks();
-    // std::cout << "Frame time: " << newFrameTime - lastFrameTime << " ms" << std::endl;
-    lastFrameTime = newFrameTime;
+  }
+  if (this->run) {
+    do {
+      this->bus->clock();
+    } while (!this->bus->getPpu()->isFrameComplete());
+    do {
+      this->bus->clock();
+    } while (this->bus->getPpu()->isFrameComplete());
+  }
+  if (this->processorWindow->isInitialized()) {
+    this->processorWindow->clear();
+    this->processorWindow->renderRAM(this->bus->getRam(), ramPage);
+    this->processorWindow->renderProcessor(this->bus->getCpu());
+    this->processorWindow->renderCode(this->mapLines, this->bus->getCpu()->getPC(), 25);
+    this->processorWindow->update();
+  }
+  if (this->mainWindow->isInitialized()) {
+    this->mainWindow->clear();
+    std::vector<SDL_Color> colors(
+      (SDL_Color*)this->bus->getPpu()->getScreen(),
+      (SDL_Color*)this->bus->getPpu()->getScreen() + 256 * 240
+    );
+    this->mainWindow->updateScreenTexture(colors);
+    this->mainWindow->update();
+  }
+  unsigned long newFrameTime = SDL_GetTicks();
+  // std::cout << "Frame time: " << newFrameTime - this->lastFrameTime << " ms" << std::endl;
+  this->lastFrameTime = newFrameTime;
+  if (!this->shouldQuit) {
+    QTimer::singleShot(0, this, &MainWidget::mainLoop);
   }
 }

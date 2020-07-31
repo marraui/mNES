@@ -24,6 +24,10 @@ void initializeSDL() {
     std::cout << "SDL_ttf couldn't initialize, error: " << SDL_GetError() << std::endl;
     return;
   }
+
+  #ifdef __APPLE__
+    SDL_SetHint(SDL_HINT_RENDER_DRIVER, "metal");
+  #endif // __APPLE__
 }
 
 void quitSDL() {
@@ -39,8 +43,14 @@ int main(int argc, char ** argv) {
   MainWidget widget;
   widget.show();
 
-  int res = application.exec();
+  QObject::connect(
+    &application,
+    &QApplication::applicationStateChanged,
+    &widget,
+    &MainWidget::onApplicationStateChange
+  );
 
+  int res = application.exec();
   quitSDL();
 
   return res;
